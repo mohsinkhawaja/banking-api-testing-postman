@@ -16,13 +16,15 @@ The runner starts a fresh fixture on a random loopback port. All 48 scenarios ex
 
 ## Optional Apache Fineract integration
 
-Follow the [Apache Fineract setup](https://github.com/apache/fineract) and [API reference](https://fineract.apache.org/docs/legacy/index.html). Use a disposable local 1.16.1 deployment. Seed a test office and active savings product in USD with zero fees and interest, no minimum opening balance, no holds, and no overdraft. Allow a user to create clients, manage savings accounts, submit transfers and undo savings transactions. Configure the test service's business date to match the current UTC date. Run only against a disposable loopback target. The 19-case integration creates synthetic records and assumes an empty balance for the configured product. Discard the disposable tenant or volume after use.
+Follow the [Apache Fineract setup](https://github.com/apache/fineract) and [API reference](https://fineract.apache.org/docs/legacy/index.html). Use a disposable local 1.16.1 deployment. Seed a test office, payment type ID 1, and an active savings product in USD with zero fees and interest, no minimum opening balance, no holds, and no overdraft. Allow a user to create clients, manage savings accounts, submit transfers and undo savings transactions. Configure the test service's business date to match the current UTC date. Run only against a disposable loopback target. The 19-case integration creates synthetic records and assumes an empty balance for the configured product. Discard the disposable tenant or volume after use.
 
 Copy the [example environment](environments/fineract-local.example.postman_environment.json) to `environments/fineract.local.postman_environment.json`. Fill in `productId`, `officeId`, `tenantId`, and `basicAuth` (the Base64 encoding of `username:password`, without `Basic `). Base64 is not encryption. Keep the local file untracked. Set `baseUrl` to the local service, including `/fineract-provider/api/v1`.
 
 ```sh
-npx --no-install newman run collections/fineract-local.postman_collection.json -e environments/fineract.local.postman_environment.json --bail
+npx --no-install newman run collections/fineract-local.postman_collection.json -e environments/fineract.local.postman_environment.json --bail --ignore-redirects --reporters cli,junit --reporter-junit-export reports/fineract.junit.xml
 ```
+
+See the [baseline](reports/baseline.md) for the verified Apache Fineract 1.16.1 and fixture results.
 
 ## Project layout
 

@@ -16,11 +16,11 @@
         "locale": "en",
         "dateFormat": "yyyy-MM-dd",
         "officeId": "@number:officeId",
+        "legalFormId": 1,
         "firstname": "Synthetic",
-        "lastname": "Primary QA",
         "active": true,
         "activationDate": "{{runDate}}",
-        "submittedOnDate": "{{runDate}}",
+        "lastname": "Primary QA",
         "externalId": "{{runKey}}"
       },
       "headers": {
@@ -34,8 +34,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}",
         "pm.collectionVariables.set(\"runDate\", new Date().toISOString().slice(0, 10));",
         "pm.collectionVariables.set(\"runKey\", pm.variables.replaceIn(\"{{$guid}}\"));"
@@ -54,11 +59,11 @@
         "locale": "en",
         "dateFormat": "yyyy-MM-dd",
         "officeId": "@number:officeId",
+        "legalFormId": 1,
         "firstname": "Synthetic",
-        "lastname": "Receiver QA",
         "active": true,
         "activationDate": "{{runDate}}",
-        "submittedOnDate": "{{runDate}}"
+        "lastname": "Receiver QA"
       },
       "headers": {
         "Authorization": "Basic {{basicAuth}}",
@@ -71,8 +76,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -103,8 +113,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -130,8 +145,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -157,8 +177,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -189,8 +214,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -216,8 +246,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -243,8 +278,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -261,6 +301,7 @@
         "locale": "en",
         "dateFormat": "yyyy-MM-dd",
         "transactionDate": "{{runDate}}",
+        "paymentTypeId": 1,
         "transactionAmount": 1000
       },
       "headers": {
@@ -275,8 +316,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -293,6 +339,7 @@
         "locale": "en",
         "dateFormat": "yyyy-MM-dd",
         "transactionDate": "{{runDate}}",
+        "paymentTypeId": 1,
         "transactionAmount": 1000
       },
       "headers": {
@@ -304,8 +351,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -322,6 +374,7 @@
         "locale": "en",
         "dateFormat": "yyyy-MM-dd",
         "transactionDate": "{{runDate}}",
+        "paymentTypeId": 1,
         "transactionAmount": 300
       },
       "headers": {
@@ -335,8 +388,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -357,8 +415,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -375,6 +438,7 @@
         "locale": "en",
         "dateFormat": "yyyy-MM-dd",
         "transactionDate": "{{runDate}}",
+        "paymentTypeId": 1,
         "transactionAmount": 700.01
       },
       "headers": {
@@ -385,8 +449,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -407,8 +476,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -444,8 +518,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -466,8 +545,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -488,8 +572,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -500,7 +589,7 @@
       "status": 200,
       "method": "POST",
       "assertions": {
-        "transaction ID matches": "data.resourceId === Number(get(\"liveWithdrawalId\"))"
+        "command identifies sender account": "data.resourceId === Number(get(\"senderId\")) && data.savingsId === Number(get(\"senderId\"))"
       },
       "body": {},
       "headers": {
@@ -511,8 +600,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -533,8 +627,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Fineract target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "const keys = [\"basicAuth\", \"tenantId\", \"officeId\", \"productId\"];",
+        "if (keys.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure local credentials, tenant, office, and savings product\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     }
