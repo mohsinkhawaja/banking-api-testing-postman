@@ -1,0 +1,2793 @@
+{
+  "info": {
+    "name": "Synthetic savings and wallet contract",
+    "description": "Fee-free USD savings, integer-cent balances, account lifecycle and linked transfer effects.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "BK-01 | Reject request with no credentials",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [401];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-01 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-01 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-01 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"AUTH_REQUIRED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/clients",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstname\": \"Synthetic\",\n  \"lastname\": \"Account Holder\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-02 | Reject unexpected tenant",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-02 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-02 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-02 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"UNKNOWN_TENANT\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "other"
+          }
+        ],
+        "url": "{{baseUrl}}/clients",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstname\": \"Synthetic\",\n  \"lastname\": \"Account Holder\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-03 | Reject read-only customer creation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [403];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-03 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-03 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-03 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"READ_ONLY_ROLE\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-reader"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/clients",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstname\": \"Synthetic\",\n  \"lastname\": \"Account Holder\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-04 | Reject blank customer surname",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-04 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-04 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-04 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INVALID_NAME\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/clients",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstname\": \"Synthetic\",\n  \"lastname\": \" \"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-05 | Create synthetic customer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-05 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-05 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-05 | contract conditions\", () => {",
+              "    pm.expect(Boolean(Number.isInteger(data.resourceId) && data.clientId === data.resourceId)).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"clientId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/clients",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstname\": \"Synthetic\",\n  \"lastname\": \"Account Holder\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-06 | Reject application for unknown customer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [404];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-06 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-06 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-06 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"CLIENT_NOT_FOUND\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": 99999,\n  \"productId\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-07 | Reject application for unknown product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-07 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-07 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-07 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"PRODUCT_NOT_FOUND\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": {{clientId}},\n  \"productId\": 99999\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-08 | Create sender savings application",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-08 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-08 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-08 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.clientId === Number(get(\"clientId\")))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"senderId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": {{clientId}},\n  \"productId\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-09 | Create recipient savings application",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-09 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-09 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-09 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.resourceId !== Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"recipientId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": {{clientId}},\n  \"productId\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-10 | New account is pending with no balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-10 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-10 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-10 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.status.submittedAndPendingApproval && data.summary.accountBalance === 0)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-11 | Activation before approval is rejected",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-11 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-11 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-11 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INVALID_TRANSITION\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?command=activate",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-12 | Deposit to pending account is rejected",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-12 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-12 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-12 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"ACCOUNT_NOT_ACTIVE\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"1.00\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-13 | Approve sender account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-13 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-13 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-13 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?command=approve",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-14 | Activate sender account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-14 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-14 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-14 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?command=activate",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-15 | Approve recipient account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-15 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-15 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-15 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"recipientId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{recipientId}}?command=approve",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-16 | Activate recipient account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-16 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-16 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-16 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"recipientId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{recipientId}}?command=activate",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-17 | Reject deposit amount zero",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-17 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-17 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-17 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INVALID_AMOUNT\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": 0\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-18 | Reject deposit amount negative",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-18 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-18 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-18 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INVALID_AMOUNT\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": -1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-19 | Reject deposit amount sub-cent precision",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-19 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-19 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-19 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INVALID_AMOUNT\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"0.001\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-20 | Reject deposit amount above maximum",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-20 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-20 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-20 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INVALID_AMOUNT\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"1000000.01\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-21 | Reject deposit amount nonnumeric",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-21 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-21 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-21 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INVALID_AMOUNT\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"x\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-22 | Rejected deposits leave sender ledger empty",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-22 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-22 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-22 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 0 && data.transactions.length === 0)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-reader"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-23 | Accept minimum amount of one cent",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-23 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-23 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-23 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"senderId\")) && Number.isInteger(data.resourceId))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"0.01\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-24 | Deposit floor boundary is reflected in balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-24 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-24 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-24 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 0.01)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-25 | Deposit the starting funds",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-25 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-25 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-25 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"depositId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "fixture-deposit-01"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"999.99\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-26 | Duplicate deposit returns original transaction",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-26 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-26 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-26 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.resourceId === Number(get(\"depositId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "fixture-deposit-01"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"999.99\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-27 | Reused key with different amount is rejected in fixture",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-27 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-27 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-27 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"KEY_REUSED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "fixture-deposit-01"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"1.00\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-28 | Deposit replay did not alter balance or ledger count",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-28 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-28 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-28 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 1000 && data.transactions.length === 2)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-29 | Withdraw 300 from sender",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-29 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-29 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-29 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"withdrawId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"300.00\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-30 | Reject withdrawal one cent over balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [403];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-30 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-30 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-30 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INSUFFICIENT_FUNDS\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"700.01\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-31 | Unauthorized sender withdrawal is rejected",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [403];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-31 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-31 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-31 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"READ_ONLY_ROLE\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-reader"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"1.00\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-32 | Both failed withdrawals preserve balance and history",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-32 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-32 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-32 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 700 && data.transactions.length === 3)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-33 | Reject self-transfer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-33 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-33 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-33 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"SAME_ACCOUNT\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/accounttransfers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fromAccountId\": {{senderId}},\n  \"toAccountId\": {{senderId}},\n  \"transferAmount\": \"250.10\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-34 | Reject transfer to unknown account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [404];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-34 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-34 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-34 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"ACCOUNT_NOT_FOUND\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/accounttransfers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fromAccountId\": {{senderId}},\n  \"toAccountId\": 99999,\n  \"transferAmount\": \"250.10\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-35 | Reject transfer over available balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [403];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-35 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-35 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-35 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INSUFFICIENT_FUNDS\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/accounttransfers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fromAccountId\": {{senderId}},\n  \"toAccountId\": {{recipientId}},\n  \"transferAmount\": \"700.01\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-36 | Recipient unchanged after transfer rejection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-36 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-36 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-36 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 0 && data.transactions.length === 0)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{recipientId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-37 | Transfer between active accounts",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-37 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-37 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-37 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"senderId\")) && data.debitTransactionId !== data.creditTransactionId)).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"transferId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/accounttransfers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fromAccountId\": {{senderId}},\n  \"toAccountId\": {{recipientId}},\n  \"transferAmount\": \"250.10\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-38 | Verify sender debit and transfer total",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-38 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-38 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-38 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 449.9 && data.transactions.some(t => t.transferId === Number(get(\"transferId\")) && t.type === \"withdrawal\" && t.amount === 250.1))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.summary.accountBalance;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"senderAfterTransfer\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-39 | Verify recipient credit and money conservation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-39 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-39 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-39 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 250.1 && Math.round((data.summary.accountBalance + Number(get(\"senderAfterTransfer\"))) * 100) === 70000 && data.transactions.some(t => t.transferId === Number(get(\"transferId\")) && t.type === \"deposit\" && t.amount === 250.1))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{recipientId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-40 | Reverse the original withdrawal",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-40 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-40 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-40 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.resourceId === Number(get(\"withdrawId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions/{{withdrawId}}?command=undo",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-41 | Repeat withdrawal reversal is rejected",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-41 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-41 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-41 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"REVERSAL_NOT_ALLOWED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions/{{withdrawId}}?command=undo",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-42 | Reversal restores amount once and retains audit flag",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-42 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-42 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-42 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 749.9 && data.transactions.find(t => t.id === Number(get(\"withdrawId\"))).reversed === true)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-43 | Reject close when balance is nonzero",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-43 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-43 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-43 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"INVALID_TRANSITION\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?command=close",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-44 | Withdraw exactly the remaining sender balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-44 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-44 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-44 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"749.90\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-45 | Verify exact boundary leaves zero balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-45 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-45 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-45 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 0)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-46 | Close zero-balance sender",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-46 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-46 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-46 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?command=close",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-47 | Closed account rejects deposits",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-47 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-47 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-47 | stable error code\", () => {",
+              "    pm.expect(Boolean(data.error.code === \"ACCOUNT_NOT_ACTIVE\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionAmount\": \"0.01\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "BK-48 | Closed state remains in account view",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"BK-48 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"BK-48 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"BK-48 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.status.closed && data.summary.accountBalance === 0)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-bank-writer"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "default"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    }
+  ]
+}

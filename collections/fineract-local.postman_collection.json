@@ -1,0 +1,1378 @@
+{
+  "info": {
+    "name": "Apache Fineract savings integration",
+    "description": "Opt-in flow against a disposable loopback Fineract instance with a fee-free product and demo tenant.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "FIN-01 | Create synthetic primary client",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}",
+              "pm.collectionVariables.set(\"runDate\", new Date().toISOString().slice(0, 10));",
+              "pm.collectionVariables.set(\"runKey\", pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-01 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-01 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-01 | integer client identifier\", () => {",
+              "    pm.expect(Boolean(Number.isInteger(data.resourceId))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"clientId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/clients",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"officeId\": {{officeId}},\n  \"firstname\": \"Synthetic\",\n  \"lastname\": \"Primary QA\",\n  \"active\": true,\n  \"activationDate\": \"{{runDate}}\",\n  \"submittedOnDate\": \"{{runDate}}\",\n  \"externalId\": \"{{runKey}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-02 | Create receiver in the configured test office",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-02 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-02 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-02 | distinct receiver identifier\", () => {",
+              "    pm.expect(Boolean(Number.isInteger(data.resourceId) && data.resourceId !== Number(get(\"clientId\")))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"clientTwo\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/clients",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"officeId\": {{officeId}},\n  \"firstname\": \"Synthetic\",\n  \"lastname\": \"Receiver QA\",\n  \"active\": true,\n  \"activationDate\": \"{{runDate}}\",\n  \"submittedOnDate\": \"{{runDate}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-03 | Submit sender savings application",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-03 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-03 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-03 | resource ID returned\", () => {",
+              "    pm.expect(Boolean(Number.isInteger(data.resourceId))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"senderId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"clientId\": {{clientId}},\n  \"productId\": {{productId}},\n  \"submittedOnDate\": \"{{runDate}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-04 | Approve sender savings application",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-04 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-04 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-04 | resource ID matches account\", () => {",
+              "    pm.expect(Boolean(data.resourceId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?command=approve",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"approvedOnDate\": \"{{runDate}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-05 | Activate sender savings account",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-05 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-05 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-05 | resource ID matches account\", () => {",
+              "    pm.expect(Boolean(data.resourceId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?command=activate",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"activatedOnDate\": \"{{runDate}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-06 | Submit receiver savings application",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-06 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-06 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-06 | resource ID returned\", () => {",
+              "    pm.expect(Boolean(Number.isInteger(data.resourceId))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"recipientId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"clientId\": {{clientTwo}},\n  \"productId\": {{productId}},\n  \"submittedOnDate\": \"{{runDate}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-07 | Approve receiver savings application",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-07 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-07 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-07 | resource ID matches account\", () => {",
+              "    pm.expect(Boolean(data.resourceId === Number(get(\"recipientId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{recipientId}}?command=approve",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"approvedOnDate\": \"{{runDate}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-08 | Activate receiver savings account",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-08 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-08 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-08 | resource ID matches account\", () => {",
+              "    pm.expect(Boolean(data.resourceId === Number(get(\"recipientId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{recipientId}}?command=activate",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"activatedOnDate\": \"{{runDate}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-09 | Deposit 1,000 units into sender",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-09 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-09 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-09 | transaction ID and sender\", () => {",
+              "    pm.expect(Boolean(Number.isInteger(data.resourceId) && data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"liveDepositId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{runKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"transactionDate\": \"{{runDate}}\",\n  \"transactionAmount\": 1000\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-10 | Duplicate deposit returns original transaction",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-10 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-10 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-10 | same transaction ID\", () => {",
+              "    pm.expect(Boolean(data.resourceId === Number(get(\"liveDepositId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{runKey}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=deposit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"transactionDate\": \"{{runDate}}\",\n  \"transactionAmount\": 1000\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-11 | Withdraw 300 units from sender",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-11 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-11 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-11 | transaction ID and sender\", () => {",
+              "    pm.expect(Boolean(Number.isInteger(data.resourceId) && data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.resourceId;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"liveWithdrawalId\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"transactionDate\": \"{{runDate}}\",\n  \"transactionAmount\": 300\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-12 | Confirm sender balance and both ledger entries",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-12 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-12 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-12 | 700 remains after one deposit and withdrawal\", () => {",
+              "    pm.expect(Boolean(data.status.active && data.summary.accountBalance === 700 && data.transactions.some(t => t.id === Number(get(\"liveDepositId\")) && t.amount === 1000) && data.transactions.some(t => t.id === Number(get(\"liveWithdrawalId\")) && t.amount === 300))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-13 | Decline withdrawal one cent over balance",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [403];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-13 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-13 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-13 | business error response\", () => {",
+              "    pm.expect(Boolean(Array.isArray(data.errors) && data.errors.length > 0)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"transactionDate\": \"{{runDate}}\",\n  \"transactionAmount\": 700.01\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-14 | Sender balance unchanged after rejection",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-14 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-14 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-14 | no unintended ledger entry\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 700 && data.transactions.length === 2)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-15 | Transfer 250 units to configured recipient",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-15 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-15 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-15 | sender and transfer resource\", () => {",
+              "    pm.expect(Boolean(Number.isInteger(data.resourceId) && data.savingsId === Number(get(\"senderId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/accounttransfers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"en\",\n  \"dateFormat\": \"yyyy-MM-dd\",\n  \"fromOfficeId\": {{officeId}},\n  \"fromClientId\": {{clientId}},\n  \"fromAccountId\": {{senderId}},\n  \"fromAccountType\": 2,\n  \"toOfficeId\": {{officeId}},\n  \"toClientId\": {{clientTwo}},\n  \"toAccountId\": {{recipientId}},\n  \"toAccountType\": 2,\n  \"transferDate\": \"{{runDate}}\",\n  \"transferAmount\": 250,\n  \"transferDescription\": \"Synthetic QA account transfer\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-16 | Confirm sender transfer debit",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-16 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-16 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-16 | 450 remains and transfer withdrawal is present\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 450 && data.transactions.some(t => t.amount === 250 && t.transactionType.withdrawal))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-17 | Confirm receiver transfer credit",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-17 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-17 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-17 | 250 received with deposit entry\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 250 && data.transactions.some(t => t.amount === 250 && t.transactionType.deposit))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{recipientId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-18 | Reverse original standalone withdrawal",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-18 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-18 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-18 | transaction ID matches\", () => {",
+              "    pm.expect(Boolean(data.resourceId === Number(get(\"liveWithdrawalId\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}/transactions/{{liveWithdrawalId}}?command=undo",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "FIN-19 | Confirm reversal flag and restored sender balance",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"FIN-19 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"FIN-19 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"FIN-19 | 750 after reverse and entry flagged\", () => {",
+              "    pm.expect(Boolean(data.summary.accountBalance === 750 && data.transactions.some(t => t.id === Number(get(\"liveWithdrawalId\")) && t.reversed === true))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Basic {{basicAuth}}"
+          },
+          {
+            "key": "Fineract-Platform-TenantId",
+            "value": "{{tenantId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/savingsaccounts/{{senderId}}?associations=transactions"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,542 @@
+{
+  "name": "Apache Fineract savings integration",
+  "description": "Opt-in flow against a disposable loopback Fineract instance with a fee-free product and demo tenant.",
+  "variables": {},
+  "cases": [
+    {
+      "id": "FIN-01",
+      "title": "Create synthetic primary client",
+      "path": "/clients",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "integer client identifier": "Number.isInteger(data.resourceId)"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "officeId": "@number:officeId",
+        "firstname": "Synthetic",
+        "lastname": "Primary QA",
+        "active": true,
+        "activationDate": "{{runDate}}",
+        "submittedOnDate": "{{runDate}}",
+        "externalId": "{{runKey}}"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "capture": {
+        "clientId": "data.resourceId"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}",
+        "pm.collectionVariables.set(\"runDate\", new Date().toISOString().slice(0, 10));",
+        "pm.collectionVariables.set(\"runKey\", pm.variables.replaceIn(\"{{$guid}}\"));"
+      ]
+    },
+    {
+      "id": "FIN-02",
+      "title": "Create receiver in the configured test office",
+      "path": "/clients",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "distinct receiver identifier": "Number.isInteger(data.resourceId) && data.resourceId !== Number(get(\"clientId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "officeId": "@number:officeId",
+        "firstname": "Synthetic",
+        "lastname": "Receiver QA",
+        "active": true,
+        "activationDate": "{{runDate}}",
+        "submittedOnDate": "{{runDate}}"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "capture": {
+        "clientTwo": "data.resourceId"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-03",
+      "title": "Submit sender savings application",
+      "path": "/savingsaccounts",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "resource ID returned": "Number.isInteger(data.resourceId)"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "clientId": "@number:clientId",
+        "productId": "@number:productId",
+        "submittedOnDate": "{{runDate}}"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "capture": {
+        "senderId": "data.resourceId"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-04",
+      "title": "Approve sender savings application",
+      "path": "/savingsaccounts/{{senderId}}?command=approve",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "resource ID matches account": "data.resourceId === Number(get(\"senderId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "approvedOnDate": "{{runDate}}"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-05",
+      "title": "Activate sender savings account",
+      "path": "/savingsaccounts/{{senderId}}?command=activate",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "resource ID matches account": "data.resourceId === Number(get(\"senderId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "activatedOnDate": "{{runDate}}"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-06",
+      "title": "Submit receiver savings application",
+      "path": "/savingsaccounts",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "resource ID returned": "Number.isInteger(data.resourceId)"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "clientId": "@number:clientTwo",
+        "productId": "@number:productId",
+        "submittedOnDate": "{{runDate}}"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "capture": {
+        "recipientId": "data.resourceId"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-07",
+      "title": "Approve receiver savings application",
+      "path": "/savingsaccounts/{{recipientId}}?command=approve",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "resource ID matches account": "data.resourceId === Number(get(\"recipientId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "approvedOnDate": "{{runDate}}"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-08",
+      "title": "Activate receiver savings account",
+      "path": "/savingsaccounts/{{recipientId}}?command=activate",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "resource ID matches account": "data.resourceId === Number(get(\"recipientId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "activatedOnDate": "{{runDate}}"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-09",
+      "title": "Deposit 1,000 units into sender",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "transaction ID and sender": "Number.isInteger(data.resourceId) && data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "transactionDate": "{{runDate}}",
+        "transactionAmount": 1000
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}",
+        "Idempotency-Key": "{{runKey}}"
+      },
+      "capture": {
+        "liveDepositId": "data.resourceId"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-10",
+      "title": "Duplicate deposit returns original transaction",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "same transaction ID": "data.resourceId === Number(get(\"liveDepositId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "transactionDate": "{{runDate}}",
+        "transactionAmount": 1000
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}",
+        "Idempotency-Key": "{{runKey}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-11",
+      "title": "Withdraw 300 units from sender",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "transaction ID and sender": "Number.isInteger(data.resourceId) && data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "transactionDate": "{{runDate}}",
+        "transactionAmount": 300
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "capture": {
+        "liveWithdrawalId": "data.resourceId"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-12",
+      "title": "Confirm sender balance and both ledger entries",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "700 remains after one deposit and withdrawal": "data.status.active && data.summary.accountBalance === 700 && data.transactions.some(t => t.id === Number(get(\"liveDepositId\")) && t.amount === 1000) && data.transactions.some(t => t.id === Number(get(\"liveWithdrawalId\")) && t.amount === 300)"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-13",
+      "title": "Decline withdrawal one cent over balance",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+      "status": 403,
+      "method": "POST",
+      "assertions": {
+        "business error response": "Array.isArray(data.errors) && data.errors.length > 0"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "transactionDate": "{{runDate}}",
+        "transactionAmount": 700.01
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-14",
+      "title": "Sender balance unchanged after rejection",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "no unintended ledger entry": "data.summary.accountBalance === 700 && data.transactions.length === 2"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-15",
+      "title": "Transfer 250 units to configured recipient",
+      "path": "/accounttransfers",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "sender and transfer resource": "Number.isInteger(data.resourceId) && data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {
+        "locale": "en",
+        "dateFormat": "yyyy-MM-dd",
+        "fromOfficeId": "@number:officeId",
+        "fromClientId": "@number:clientId",
+        "fromAccountId": "@number:senderId",
+        "fromAccountType": 2,
+        "toOfficeId": "@number:officeId",
+        "toClientId": "@number:clientTwo",
+        "toAccountId": "@number:recipientId",
+        "toAccountType": 2,
+        "transferDate": "{{runDate}}",
+        "transferAmount": 250,
+        "transferDescription": "Synthetic QA account transfer"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-16",
+      "title": "Confirm sender transfer debit",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "450 remains and transfer withdrawal is present": "data.summary.accountBalance === 450 && data.transactions.some(t => t.amount === 250 && t.transactionType.withdrawal)"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-17",
+      "title": "Confirm receiver transfer credit",
+      "path": "/savingsaccounts/{{recipientId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "250 received with deposit entry": "data.summary.accountBalance === 250 && data.transactions.some(t => t.amount === 250 && t.transactionType.deposit)"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-18",
+      "title": "Reverse original standalone withdrawal",
+      "path": "/savingsaccounts/{{senderId}}/transactions/{{liveWithdrawalId}}?command=undo",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "transaction ID matches": "data.resourceId === Number(get(\"liveWithdrawalId\"))"
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    },
+    {
+      "id": "FIN-19",
+      "title": "Confirm reversal flag and restored sender balance",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "750 after reverse and entry flagged": "data.summary.accountBalance === 750 && data.transactions.some(t => t.id === Number(get(\"liveWithdrawalId\")) && t.reversed === true)"
+      },
+      "headers": {
+        "Authorization": "Basic {{basicAuth}}",
+        "Fineract-Platform-TenantId": "{{tenantId}}"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/fineract-provider\\/api\\/v1$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to the disposable local Fineract API\");",
+        "}"
+      ]
+    }
+  ]
+}

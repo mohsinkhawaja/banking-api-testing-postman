@@ -1,0 +1,858 @@
+{
+  "name": "Synthetic savings and wallet contract",
+  "description": "Fee-free USD savings, integer-cent balances, account lifecycle and linked transfer effects.",
+  "variables": {},
+  "cases": [
+    {
+      "id": "BK-01",
+      "title": "Reject request with no credentials",
+      "path": "/clients",
+      "status": 401,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"AUTH_REQUIRED\""
+      },
+      "body": {
+        "firstname": "Synthetic",
+        "lastname": "Account Holder"
+      },
+      "headers": {},
+      "cookieJar": false
+    },
+    {
+      "id": "BK-02",
+      "title": "Reject unexpected tenant",
+      "path": "/clients",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"UNKNOWN_TENANT\""
+      },
+      "body": {
+        "firstname": "Synthetic",
+        "lastname": "Account Holder"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "other"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-03",
+      "title": "Reject read-only customer creation",
+      "path": "/clients",
+      "status": 403,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"READ_ONLY_ROLE\""
+      },
+      "body": {
+        "firstname": "Synthetic",
+        "lastname": "Account Holder"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-reader",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-04",
+      "title": "Reject blank customer surname",
+      "path": "/clients",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INVALID_NAME\""
+      },
+      "body": {
+        "firstname": "Synthetic",
+        "lastname": " "
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-05",
+      "title": "Create synthetic customer",
+      "path": "/clients",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "Number.isInteger(data.resourceId) && data.clientId === data.resourceId"
+      },
+      "body": {
+        "firstname": "Synthetic",
+        "lastname": "Account Holder"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "capture": {
+        "clientId": "data.resourceId"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-06",
+      "title": "Reject application for unknown customer",
+      "path": "/savingsaccounts",
+      "status": 404,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"CLIENT_NOT_FOUND\""
+      },
+      "body": {
+        "clientId": 99999,
+        "productId": 1
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-07",
+      "title": "Reject application for unknown product",
+      "path": "/savingsaccounts",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"PRODUCT_NOT_FOUND\""
+      },
+      "body": {
+        "clientId": "@number:clientId",
+        "productId": 99999
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-08",
+      "title": "Create sender savings application",
+      "path": "/savingsaccounts",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.clientId === Number(get(\"clientId\"))"
+      },
+      "body": {
+        "clientId": "@number:clientId",
+        "productId": 1
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "capture": {
+        "senderId": "data.resourceId"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-09",
+      "title": "Create recipient savings application",
+      "path": "/savingsaccounts",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.resourceId !== Number(get(\"senderId\"))"
+      },
+      "body": {
+        "clientId": "@number:clientId",
+        "productId": 1
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "capture": {
+        "recipientId": "data.resourceId"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-10",
+      "title": "New account is pending with no balance",
+      "path": "/savingsaccounts/{{senderId}}",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.status.submittedAndPendingApproval && data.summary.accountBalance === 0"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-11",
+      "title": "Activation before approval is rejected",
+      "path": "/savingsaccounts/{{senderId}}?command=activate",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INVALID_TRANSITION\""
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-12",
+      "title": "Deposit to pending account is rejected",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"ACCOUNT_NOT_ACTIVE\""
+      },
+      "body": {
+        "transactionAmount": "1.00"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-13",
+      "title": "Approve sender account",
+      "path": "/savingsaccounts/{{senderId}}?command=approve",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-14",
+      "title": "Activate sender account",
+      "path": "/savingsaccounts/{{senderId}}?command=activate",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-15",
+      "title": "Approve recipient account",
+      "path": "/savingsaccounts/{{recipientId}}?command=approve",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"recipientId\"))"
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-16",
+      "title": "Activate recipient account",
+      "path": "/savingsaccounts/{{recipientId}}?command=activate",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"recipientId\"))"
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-17",
+      "title": "Reject deposit amount zero",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INVALID_AMOUNT\""
+      },
+      "body": {
+        "transactionAmount": 0
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-18",
+      "title": "Reject deposit amount negative",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INVALID_AMOUNT\""
+      },
+      "body": {
+        "transactionAmount": -1
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-19",
+      "title": "Reject deposit amount sub-cent precision",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INVALID_AMOUNT\""
+      },
+      "body": {
+        "transactionAmount": "0.001"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-20",
+      "title": "Reject deposit amount above maximum",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INVALID_AMOUNT\""
+      },
+      "body": {
+        "transactionAmount": "1000000.01"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-21",
+      "title": "Reject deposit amount nonnumeric",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INVALID_AMOUNT\""
+      },
+      "body": {
+        "transactionAmount": "x"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-22",
+      "title": "Rejected deposits leave sender ledger empty",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 0 && data.transactions.length === 0"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-reader",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-23",
+      "title": "Accept minimum amount of one cent",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"senderId\")) && Number.isInteger(data.resourceId)"
+      },
+      "body": {
+        "transactionAmount": "0.01"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-24",
+      "title": "Deposit floor boundary is reflected in balance",
+      "path": "/savingsaccounts/{{senderId}}",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 0.01"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-25",
+      "title": "Deposit the starting funds",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {
+        "transactionAmount": "999.99"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default",
+        "Idempotency-Key": "fixture-deposit-01"
+      },
+      "capture": {
+        "depositId": "data.resourceId"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-26",
+      "title": "Duplicate deposit returns original transaction",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.resourceId === Number(get(\"depositId\"))"
+      },
+      "body": {
+        "transactionAmount": "999.99"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default",
+        "Idempotency-Key": "fixture-deposit-01"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-27",
+      "title": "Reused key with different amount is rejected in fixture",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"KEY_REUSED\""
+      },
+      "body": {
+        "transactionAmount": "1.00"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default",
+        "Idempotency-Key": "fixture-deposit-01"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-28",
+      "title": "Deposit replay did not alter balance or ledger count",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 1000 && data.transactions.length === 2"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-29",
+      "title": "Withdraw 300 from sender",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {
+        "transactionAmount": "300.00"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "capture": {
+        "withdrawId": "data.resourceId"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-30",
+      "title": "Reject withdrawal one cent over balance",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+      "status": 403,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INSUFFICIENT_FUNDS\""
+      },
+      "body": {
+        "transactionAmount": "700.01"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-31",
+      "title": "Unauthorized sender withdrawal is rejected",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+      "status": 403,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"READ_ONLY_ROLE\""
+      },
+      "body": {
+        "transactionAmount": "1.00"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-reader",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-32",
+      "title": "Both failed withdrawals preserve balance and history",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 700 && data.transactions.length === 3"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-33",
+      "title": "Reject self-transfer",
+      "path": "/accounttransfers",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"SAME_ACCOUNT\""
+      },
+      "body": {
+        "fromAccountId": "@number:senderId",
+        "toAccountId": "@number:senderId",
+        "transferAmount": "250.10"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-34",
+      "title": "Reject transfer to unknown account",
+      "path": "/accounttransfers",
+      "status": 404,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"ACCOUNT_NOT_FOUND\""
+      },
+      "body": {
+        "fromAccountId": "@number:senderId",
+        "toAccountId": 99999,
+        "transferAmount": "250.10"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-35",
+      "title": "Reject transfer over available balance",
+      "path": "/accounttransfers",
+      "status": 403,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INSUFFICIENT_FUNDS\""
+      },
+      "body": {
+        "fromAccountId": "@number:senderId",
+        "toAccountId": "@number:recipientId",
+        "transferAmount": "700.01"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-36",
+      "title": "Recipient unchanged after transfer rejection",
+      "path": "/savingsaccounts/{{recipientId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 0 && data.transactions.length === 0"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-37",
+      "title": "Transfer between active accounts",
+      "path": "/accounttransfers",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"senderId\")) && data.debitTransactionId !== data.creditTransactionId"
+      },
+      "body": {
+        "fromAccountId": "@number:senderId",
+        "toAccountId": "@number:recipientId",
+        "transferAmount": "250.10"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "capture": {
+        "transferId": "data.resourceId"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-38",
+      "title": "Verify sender debit and transfer total",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 449.9 && data.transactions.some(t => t.transferId === Number(get(\"transferId\")) && t.type === \"withdrawal\" && t.amount === 250.1)"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "capture": {
+        "senderAfterTransfer": "data.summary.accountBalance"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-39",
+      "title": "Verify recipient credit and money conservation",
+      "path": "/savingsaccounts/{{recipientId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 250.1 && Math.round((data.summary.accountBalance + Number(get(\"senderAfterTransfer\"))) * 100) === 70000 && data.transactions.some(t => t.transferId === Number(get(\"transferId\")) && t.type === \"deposit\" && t.amount === 250.1)"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-40",
+      "title": "Reverse the original withdrawal",
+      "path": "/savingsaccounts/{{senderId}}/transactions/{{withdrawId}}?command=undo",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.resourceId === Number(get(\"withdrawId\"))"
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-41",
+      "title": "Repeat withdrawal reversal is rejected",
+      "path": "/savingsaccounts/{{senderId}}/transactions/{{withdrawId}}?command=undo",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"REVERSAL_NOT_ALLOWED\""
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-42",
+      "title": "Reversal restores amount once and retains audit flag",
+      "path": "/savingsaccounts/{{senderId}}?associations=transactions",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 749.9 && data.transactions.find(t => t.id === Number(get(\"withdrawId\"))).reversed === true"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-43",
+      "title": "Reject close when balance is nonzero",
+      "path": "/savingsaccounts/{{senderId}}?command=close",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"INVALID_TRANSITION\""
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-44",
+      "title": "Withdraw exactly the remaining sender balance",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=withdrawal",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {
+        "transactionAmount": "749.90"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-45",
+      "title": "Verify exact boundary leaves zero balance",
+      "path": "/savingsaccounts/{{senderId}}",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.summary.accountBalance === 0"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-46",
+      "title": "Close zero-balance sender",
+      "path": "/savingsaccounts/{{senderId}}?command=close",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.savingsId === Number(get(\"senderId\"))"
+      },
+      "body": {},
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-47",
+      "title": "Closed account rejects deposits",
+      "path": "/savingsaccounts/{{senderId}}/transactions?command=deposit",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error code": "data.error.code === \"ACCOUNT_NOT_ACTIVE\""
+      },
+      "body": {
+        "transactionAmount": "0.01"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "BK-48",
+      "title": "Closed state remains in account view",
+      "path": "/savingsaccounts/{{senderId}}",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.status.closed && data.summary.accountBalance === 0"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-bank-writer",
+        "Fineract-Platform-TenantId": "default"
+      },
+      "cookieJar": false
+    }
+  ]
+}

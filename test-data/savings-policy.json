@@ -1,0 +1,10 @@
+{
+  "tenant": "default",
+  "currency": "USD",
+  "decimalPlaces": 2,
+  "productId": 1,
+  "minimumAmountMinor": 1,
+  "maximumAmountMinor": 100000000,
+  "overdraftAllowed": false,
+  "feesMinor": 0
+}
